@@ -11,6 +11,10 @@ public class NumberToBanglaTaka {
       String[] convert = numberAsString.split("\\.");
       long taka = Long.parseLong(convert[0]);
       int paisa = Integer.parseInt(convert[1]);
+      if (taka == 0L && paisa == 0) {
+         return "Zero Taka Only";
+      }
+
       NumberToBanglaTaka numberToBanglaTaka = new NumberToBanglaTaka();
       String totalTaka = "";
       if (taka != 0L) {
@@ -42,7 +46,7 @@ public class NumberToBanglaTaka {
          int a = Integer.parseInt(n.toString());
          return units[a / 100] + " Hundred" + (a % 100 != 0 ? " " : "") + this.convertTaka(n % 100L);
       } else if (n < 100000L) {
-         return this.convertTaka(n / 1000L) + " Thousand" + (n % 10000L != 0L ? " " : "") + this.convertTaka(n % 1000L);
+         return this.convertTaka(n / 1000L) + " Thousand" + (n % 1000L != 0L ? " " : "") + this.convertTaka(n % 1000L);
       } else {
          return n < 10000000L ? this.convertTaka(n / 100000L) + " Lakh" + (n % 100000L != 0L ? " " : "") + this.convertTaka(n % 100000L) : this.convertTaka(n / 10000000L) + " Crore" + (n % 10000000L != 0L ? " " : "") + this.convertTaka(n % 10000000L);
       }
