@@ -25,7 +25,7 @@ Add the repository and the dependency to your `pom.xml`:
 </repositories>
 
 <dependency>
-    <groupId>com.bracits</groupId>
+    <groupId>io.github.oblivion97</groupId>
     <artifactId>amount-to-bdt</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -46,7 +46,7 @@ Add the repository and the dependency to your `pom.xml`:
 From a local clone of this repository:
 
 ```bash
-mvn deploy:deploy-file -DgroupId=com.bracits -DartifactId=amount-to-bdt -Dversion=1.0.1 -Dpackaging=jar \
+mvn deploy:deploy-file -DgroupId=io.github.oblivion97 -DartifactId=amount-to-bdt -Dversion=1.0.1 -Dpackaging=jar \
   -Dfile=path/to/amount-to-bdt-1.0.1.jar -DgeneratePom=true "-Durl=file:///path/to/mvn-amount-to-bdt"
 git add . && git commit -m "Release 1.0.1" && git push
 ```
