@@ -1,4 +1,5 @@
 # Not published from this folder
-com/bracits/arial/
-com/bracits/arial-narrow/
-com/bracits/solaiman-lipi/
+com/bracits/
+
+# Build output
+target/
