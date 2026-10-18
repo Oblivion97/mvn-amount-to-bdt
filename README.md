@@ -4,7 +4,9 @@ A small Java library that converts a numeric amount into words in Bangladeshi Ta
 lakh/crore numbering system. It's free for anyone to use in any project.
 
 ```java
-NumberToBanglaTaka.convert(1234567.89);
+import io.github.oblivion97.amounttobdt.AmountToBdt;
+
+AmountToBdt.convert(1234567.89);
 // "Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven Taka Eighty Nine Paisa Only"
 ```
 
@@ -27,7 +29,7 @@ Add the repository and the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.oblivion97</groupId>
     <artifactId>amount-to-bdt</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -35,18 +37,22 @@ Add the repository and the dependency to your `pom.xml`:
 
 | Version | Changes |
 |---|---|
+| 1.1.0 | New packaged API `io.github.oblivion97.amounttobdt.AmountToBdt`, usable from any package. `NumberToBanglaTaka` stays for existing callers and delegates to it. Output is unchanged from 1.0.1. |
 | 1.0.1 | Zero now returns "Zero Taka Only" (was "Only"). Fixed a double space after "Thousand" for round thousands, e.g. 12000 → "Twelve Thousand Taka Only". |
 | 1.0.0 | Initial release. |
 
 ## API
 
-`NumberToBanglaTaka` is in the default package. Requires Java 8 or newer.
+Requires Java 8 or newer. Use `io.github.oblivion97.amounttobdt.AmountToBdt`; all methods are static.
 
 | Method | Description |
 |---|---|
-| `static String convert(double amount)` | Full amount in words, Taka and Paisa, ending in "Only" |
-| `String convertTaka(Long taka)` | Whole-Taka part in words |
-| `String convertPaisa(int paisa)` | Paisa part in words |
+| `convert(double amount)` | Full amount in words, Taka and Paisa, ending in "Only" |
+| `convertTaka(long taka)` | Whole-Taka part in words |
+| `convertPaisa(int paisa)` | Paisa part (0–99) in words |
+
+`NumberToBanglaTaka` (default package) has the same methods and is kept for existing callers, such as compiled
+Jasper reports. Java code in a named package can't import a default-package class, so new code should use `AmountToBdt`.
 
 ## Repository layout
 
