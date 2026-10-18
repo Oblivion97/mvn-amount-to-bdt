@@ -1,0 +1,92 @@
+name: Release
+
+# Push a tag like v1.4.1 to publish that version to Maven Central and create a GitHub Release.
+# Run manually from the Actions tab to test the setup: it builds and signs everything but uploads nothing.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Project version: $VERSION"
+
+      - name: Check tag matches pom version
+        if: github.event_name == 'push'
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$TAG" != "${{ steps.version.outputs.version }}" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pom version ${{ steps.version.outputs.version }}"
+            exit 1
+          fi
+          case "$TAG" in *-SNAPSHOT) echo "::error::Snapshot versions are not released"; exit 1;; esac
+
+      - name: Check the GitHub-hosted Maven repo has this version
+        run: |
+          DIR="io/github/oblivion97/amount-to-bdt/${{ steps.version.outputs.version }}"
+          if [ ! -f "$DIR/amount-to-bdt-${{ steps.version.outputs.version }}.jar" ]; then
+            echo "::error::$DIR is missing. Run scripts/prepare-release.sh in the release PR first."
+            exit 1
+          fi
+
+      - name: Build, sign and check (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        run: mvn -B -ntp -P central-release clean verify
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Publish to Maven Central
+        if: github.event_name == 'push'
+        run: mvn -B -ntp -P central-release clean deploy -DautoPublish=true -DwaitUntil=PUBLISHED -DwaitMaxTime=3600
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ steps.version.outputs.version }}"
+          gh release create "$GITHUB_REF_NAME" \
+            target/amount-to-bdt-$V.jar target/amount-to-bdt-$V-sources.jar target/amount-to-bdt-$V-javadoc.jar \
+            --title "amount-to-bdt $V" \
+            --notes "Maven Central: https://central.sonatype.com/artifact/io.github.oblivion97/amount-to-bdt/$V
+
+          \`\`\`xml
+          <dependency>
+              <groupId>io.github.oblivion97</groupId>
+              <artifactId>amount-to-bdt</artifactId>
+              <version>$V</version>
+          </dependency>
+          \`\`\`
+
+          See the changelog in README.md."
