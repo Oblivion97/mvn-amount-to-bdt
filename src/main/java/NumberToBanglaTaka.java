@@ -1,5 +1,6 @@
 import io.github.oblivion97.amounttobdt.AmountToBdt;
 
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 /**
@@ -11,6 +12,10 @@ public class NumberToBanglaTaka {
    public static final String[] tens = new String[]{"", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"};
 
    public static String convert(double n) {
+      return AmountToBdt.convert(n);
+   }
+
+   public static String convert(BigDecimal n) {
       return AmountToBdt.convert(n);
    }
 
