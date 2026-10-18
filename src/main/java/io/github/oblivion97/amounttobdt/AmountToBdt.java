@@ -103,6 +103,120 @@ public final class AmountToBdt {
         }
     }
 
+    /**
+     * Full amount in Bangla words, e.g. 1234.56 → "এক হাজার দুইশত চৌত্রিশ টাকা ছাপ্পান্ন পয়সা মাত্র".
+     *
+     * @throws NullPointerException     if {@code amount} is null
+     * @throws IllegalArgumentException if the Taka part does not fit in a {@code long}
+     */
+    public static String convertBangla(BigDecimal amount) {
+        Amount a = Amount.of(amount);
+        if (a.isZero()) {
+            return BanglaWords.ZERO + " " + BanglaWords.TAKA + " " + BanglaWords.ONLY;
+        }
+
+        StringBuilder words = new StringBuilder();
+        if (a.negative) {
+            words.append(BanglaWords.MINUS).append(' ');
+        }
+        if (a.taka > 0L) {
+            words.append(BanglaWords.words(a.taka)).append(' ').append(BanglaWords.TAKA).append(' ');
+        }
+        if (a.paisa > 0) {
+            words.append(BanglaWords.under100(a.paisa)).append(' ').append(BanglaWords.PAISA).append(' ');
+        }
+        return words.append(BanglaWords.ONLY).toString();
+    }
+
+    /**
+     * Full amount in Bangla words, for {@code double} values.
+     *
+     * @throws IllegalArgumentException if {@code amount} is NaN or infinite
+     */
+    public static String convertBangla(double amount) {
+        return convertBangla(toBigDecimal(amount));
+    }
+
+    /**
+     * Whole-Taka amount in Bangla words, e.g. 500 → "পাঁচশত টাকা মাত্র".
+     */
+    public static String convertBangla(long taka) {
+        return convertBangla(BigDecimal.valueOf(taka));
+    }
+
+    /**
+     * Amount with lakh/crore digit grouping and two decimals, e.g. 1234567.891 → "12,34,567.89".
+     *
+     * @throws NullPointerException if {@code amount} is null
+     */
+    public static String format(BigDecimal amount) {
+        if (amount == null) {
+            throw new NullPointerException("amount");
+        }
+        BigDecimal rounded = amount.setScale(2, RoundingMode.HALF_UP);
+        String plain = rounded.abs().toPlainString();
+        int dot = plain.indexOf('.');
+        String whole = plain.substring(0, dot);
+
+        StringBuilder grouped = new StringBuilder();
+        int len = whole.length();
+        if (len <= 3) {
+            grouped.append(whole);
+        } else {
+            String head = whole.substring(0, len - 3);
+            int first = head.length() % 2;
+            if (first > 0) {
+                grouped.append(head, 0, first).append(',');
+            }
+            for (int i = first; i < head.length(); i += 2) {
+                grouped.append(head, i, i + 2).append(',');
+            }
+            grouped.append(whole.substring(len - 3));
+        }
+        return (rounded.signum() < 0 ? "-" : "") + grouped + plain.substring(dot);
+    }
+
+    /**
+     * Lakh/crore grouping for {@code double} values.
+     *
+     * @throws IllegalArgumentException if {@code amount} is NaN or infinite
+     */
+    public static String format(double amount) {
+        return format(toBigDecimal(amount));
+    }
+
+    /**
+     * Lakh/crore grouping for whole-Taka amounts, e.g. 1500000 → "15,00,000.00".
+     */
+    public static String format(long taka) {
+        return format(BigDecimal.valueOf(taka));
+    }
+
+    /**
+     * Lakh/crore grouping in Bangla digits, e.g. 1234567.89 → "১২,৩৪,৫৬৭.৮৯".
+     *
+     * @throws NullPointerException if {@code amount} is null
+     */
+    public static String formatBangla(BigDecimal amount) {
+        return BanglaWords.digits(format(amount));
+    }
+
+    /**
+     * Bangla-digit grouping for {@code double} values.
+     *
+     * @throws IllegalArgumentException if {@code amount} is NaN or infinite
+     */
+    public static String formatBangla(double amount) {
+        return BanglaWords.digits(format(amount));
+    }
+
+    /**
+     * Bangla-digit grouping for whole-Taka amounts.
+     */
+    public static String formatBangla(long taka) {
+        return BanglaWords.digits(format(taka));
+    }
+
     static BigDecimal toBigDecimal(double amount) {
         if (Double.isNaN(amount) || Double.isInfinite(amount)) {
             throw new IllegalArgumentException("Amount must be a finite number: " + amount);
