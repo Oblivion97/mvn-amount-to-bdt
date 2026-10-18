@@ -9,8 +9,16 @@ lakh/crore numbering system. Free to use in any project under the [MIT License](
 ```java
 import io.github.oblivion97.amounttobdt.AmountToBdt;
 
-AmountToBdt.convert(new BigDecimal("1234567.89"));
+BigDecimal amount = new BigDecimal("1234567.89");
+
+AmountToBdt.convert(amount);
 // "Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven Taka Eighty Nine Paisa Only"
+
+AmountToBdt.convertBangla(amount);
+// "বারো লক্ষ চৌত্রিশ হাজার পাঁচশত সাতষট্টি টাকা ঊননব্বই পয়সা মাত্র"
+
+AmountToBdt.format(amount);       // "12,34,567.89"
+AmountToBdt.formatBangla(amount); // "১২,৩৪,৫৬৭.৮৯"
 ```
 
 This repository is also a Maven repository. The jar is served straight from GitHub raw URLs, so Maven downloads it
@@ -32,7 +40,7 @@ Add the repository and the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.oblivion97</groupId>
     <artifactId>amount-to-bdt</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -47,7 +55,12 @@ Requires Java 8 or newer. Use `io.github.oblivion97.amounttobdt.AmountToBdt`; al
 | `convert(long taka)` | Same, for whole-Taka amounts |
 | `convertTaka(long taka)` | Whole-Taka part in words |
 | `convertPaisa(int paisa)` | Paisa part (0–99) in words |
+| `convertBangla(BigDecimal \| double \| long)` | Full amount in Bangla words, ending in "মাত্র" |
+| `format(BigDecimal \| double \| long)` | Lakh/crore digit grouping with two decimals: `12,34,567.89` |
+| `formatBangla(BigDecimal \| double \| long)` | Same grouping in Bangla digits: `১২,৩৪,৫৬৭.৮৯` |
 
+- Bangla words use Bangla Academy spelling (e.g. ষোলো, ঊনত্রিশ), "শত" for hundreds (দুইশত), and "ঋণাত্মক" for
+  negative amounts.
 - Amounts are rounded to two decimals, **half up**: `2.675` → "Two Taka Sixty Eight Paisa Only".
 - Output doesn't depend on the server's default locale.
 - `NaN`, infinity and amounts beyond about 9.2 × 10¹⁸ Taka throw `IllegalArgumentException`, and `null` throws
@@ -60,6 +73,7 @@ Jasper reports. Java code in a named package can't import a default-package clas
 
 | Version | Changes |
 |---|---|
+| 1.3.0 | Bangla script output with `convertBangla`. Lakh/crore number formatting with `format` (`12,34,567.89`) and `formatBangla` (`১২,৩৪,৫৬৭.৮৯`). English output is unchanged. |
 | 1.2.0 | Fixed a crash on servers whose default locale uses a comma decimal separator (e.g. German, French). Rounding is now half up (`0.125` → 13 paisa, was 12). Added `convert(BigDecimal)` and `convert(long)`. Invalid input (`NaN`, infinity, out of range) throws `IllegalArgumentException`. MIT license, unit tests, CI, and an `Automatic-Module-Name` for Java modules. |
 | 1.1.0 | New packaged API `io.github.oblivion97.amounttobdt.AmountToBdt`, usable from any package. `NumberToBanglaTaka` stays for existing callers and delegates to it. Output is unchanged from 1.0.1. |
 | 1.0.1 | Zero now returns "Zero Taka Only" (was "Only"). Fixed a double space after "Thousand" for round thousands, e.g. 12000 → "Twelve Thousand Taka Only". |
@@ -80,11 +94,11 @@ branch, push it, and open a PR.
 
 ## Publishing a new version
 
-1. Bump `<version>` in `pom.xml` (for example to `1.2.1`) and run `mvn verify`.
+1. Bump `<version>` in `pom.xml` (for example to `1.3.1`) and run `mvn verify`.
 2. Deploy the build into this repository's Maven layout:
    ```bash
-   mvn deploy:deploy-file -DpomFile=pom.xml -Dfile=target/amount-to-bdt-1.2.1.jar \
-     -Dsources=target/amount-to-bdt-1.2.1-sources.jar "-Durl=file://$(pwd)"
+   mvn deploy:deploy-file -DpomFile=pom.xml -Dfile=target/amount-to-bdt-1.3.1.jar \
+     -Dsources=target/amount-to-bdt-1.3.1-sources.jar "-Durl=file://$(pwd)"
    ```
 3. Commit on a branch, open a PR, and merge it into `main` once CI passes.
 
