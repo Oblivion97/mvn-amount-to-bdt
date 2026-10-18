@@ -1,6 +1,7 @@
 # mvn-amount-to-bdt
 
 [![CI](https://github.com/Oblivion97/mvn-amount-to-bdt/actions/workflows/ci.yml/badge.svg)](https://github.com/Oblivion97/mvn-amount-to-bdt/actions/workflows/ci.yml)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.oblivion97/amount-to-bdt)](https://central.sonatype.com/artifact/io.github.oblivion97/amount-to-bdt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A small Java library that converts a numeric amount into words in Bangladeshi Taka, using the
@@ -21,12 +22,23 @@ AmountToBdt.format(amount);       // "12,34,567.89"
 AmountToBdt.formatBangla(amount); // "১২,৩৪,৫৬৭.৮৯"
 ```
 
-This repository is also a Maven repository. The jar is served straight from GitHub raw URLs, so Maven downloads it
-like any other dependency, with no token or manual install.
-
 ## Use it
 
-Add the repository and the dependency to your `pom.xml`:
+The library is on [Maven Central](https://central.sonatype.com/artifact/io.github.oblivion97/amount-to-bdt). Add the
+dependency to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>io.github.oblivion97</groupId>
+    <artifactId>amount-to-bdt</artifactId>
+    <version>1.4.0</version>
+</dependency>
+```
+
+Gradle: `implementation 'io.github.oblivion97:amount-to-bdt:1.4.0'`
+
+**Alternative:** this repository is also a Maven repository, served from GitHub raw URLs. It has every version,
+including 1.0.0–1.3.0, which aren't on Maven Central. To use it, add:
 
 ```xml
 <repositories>
@@ -36,12 +48,6 @@ Add the repository and the dependency to your `pom.xml`:
         <snapshots><enabled>false</enabled></snapshots>
     </repository>
 </repositories>
-
-<dependency>
-    <groupId>io.github.oblivion97</groupId>
-    <artifactId>amount-to-bdt</artifactId>
-    <version>1.4.0</version>
-</dependency>
 ```
 
 ## API
