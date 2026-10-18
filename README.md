@@ -27,9 +27,16 @@ Add the repository and the dependency to your `pom.xml`:
 <dependency>
     <groupId>io.github.oblivion97</groupId>
     <artifactId>amount-to-bdt</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 </dependency>
 ```
+
+## Changelog
+
+| Version | Changes |
+|---|---|
+| 1.0.1 | Zero now returns "Zero Taka Only" (was "Only"). Fixed a double space after "Thousand" for round thousands, e.g. 12000 → "Twelve Thousand Taka Only". |
+| 1.0.0 | Initial release. |
 
 ## API
 
@@ -55,11 +62,11 @@ Add the repository and the dependency to your `pom.xml`:
 
 ## Publishing a new version
 
-1. Bump `<version>` in `pom.xml` (for example to `1.0.1`) and build with `mvn package`.
+1. Bump `<version>` in `pom.xml` (for example to `1.0.2`) and build with `mvn package`.
 2. Deploy the build into this repository's Maven layout:
    ```bash
-   mvn deploy:deploy-file -DpomFile=pom.xml -Dfile=target/amount-to-bdt-1.0.1.jar \
-     -Dsources=target/amount-to-bdt-1.0.1-sources.jar "-Durl=file://$(pwd)"
+   mvn deploy:deploy-file -DpomFile=pom.xml -Dfile=target/amount-to-bdt-1.0.2.jar \
+     -Dsources=target/amount-to-bdt-1.0.2-sources.jar "-Durl=file://$(pwd)"
    ```
 3. Commit on a branch, open a PR, and merge it into `main`.
 
