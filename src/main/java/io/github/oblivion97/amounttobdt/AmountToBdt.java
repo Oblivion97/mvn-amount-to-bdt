@@ -1,14 +1,18 @@
 package io.github.oblivion97.amounttobdt;
 
-import java.text.DecimalFormat;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Converts numeric amounts into words in Bangladeshi Taka, using the lakh/crore numbering system.
  *
  * <pre>
- * AmountToBdt.convert(1234567.89);
+ * AmountToBdt.convert(new BigDecimal("1234567.89"));
  * // "Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven Taka Eighty Nine Paisa Only"
  * </pre>
+ *
+ * <p>Amounts are rounded to two decimals with {@link RoundingMode#HALF_UP}. Output does not depend on the JVM's
+ * default locale. All methods are thread-safe.
  */
 public final class AmountToBdt {
 
@@ -21,35 +25,56 @@ public final class AmountToBdt {
     }
 
     /**
-     * Full amount in words, rounded to two decimals: Taka, then Paisa, ending in "Only".
+     * Full amount in words: Taka, then Paisa, ending in "Only".
+     *
+     * @throws NullPointerException     if {@code amount} is null
+     * @throws IllegalArgumentException if the Taka part does not fit in a {@code long}
      */
-    public static String convert(double amount) {
-        String[] parts = new DecimalFormat("#0.00").format(amount).split("\\.");
-        long taka = Long.parseLong(parts[0]);
-        int paisa = Integer.parseInt(parts[1]);
-        if (taka == 0L && paisa == 0) {
+    public static String convert(BigDecimal amount) {
+        Amount a = Amount.of(amount);
+        if (a.isZero()) {
             return "Zero Taka Only";
         }
 
-        String words = "";
-        if (taka != 0L) {
-            words = convertTaka(taka) + " Taka ";
+        StringBuilder words = new StringBuilder();
+        if (a.negative) {
+            words.append("Minus ");
         }
-        if (taka == 0L && amount < 0) {
-            words = "Minus ";
+        if (a.taka > 0L) {
+            words.append(convertTaka(a.taka)).append(" Taka ");
         }
-        if (paisa > 0) {
-            words = words + convertPaisa(paisa) + " Paisa ";
+        if (a.paisa > 0) {
+            words.append(convertPaisa(a.paisa)).append(" Paisa ");
         }
-        return words + "Only";
+        return words.append("Only").toString();
+    }
+
+    /**
+     * Full amount in words. The value is taken as written in decimal, so {@code 2.675} rounds to 2.68.
+     *
+     * @throws IllegalArgumentException if {@code amount} is NaN or infinite
+     */
+    public static String convert(double amount) {
+        return convert(toBigDecimal(amount));
+    }
+
+    /**
+     * Whole-Taka amount in words, e.g. 500 → "Five Hundred Taka Only".
+     */
+    public static String convert(long taka) {
+        return convert(BigDecimal.valueOf(taka));
     }
 
     /**
      * Whole-Taka part in words, e.g. 12000 → "Twelve Thousand". Zero returns an empty string.
+     *
+     * @throws IllegalArgumentException if {@code n} is {@link Long#MIN_VALUE}
      */
     public static String convertTaka(long n) {
-        if (n < 0L) {
-            return "Minus " + convertTaka(Math.abs(n));
+        if (n == Long.MIN_VALUE) {
+            throw new IllegalArgumentException("Amount out of range: " + n);
+        } else if (n < 0L) {
+            return "Minus " + convertTaka(-n);
         } else if (n < 20L) {
             return UNITS[(int) n];
         } else if (n < 100L) {
@@ -75,6 +100,48 @@ public final class AmountToBdt {
             return TENS[n / 10] + (n % 10 != 0 ? " " : "") + UNITS[n % 10];
         } else {
             return "";
+        }
+    }
+
+    static BigDecimal toBigDecimal(double amount) {
+        if (Double.isNaN(amount) || Double.isInfinite(amount)) {
+            throw new IllegalArgumentException("Amount must be a finite number: " + amount);
+        }
+        return BigDecimal.valueOf(amount);
+    }
+
+    /**
+     * An amount split into sign, whole Taka and Paisa after rounding to two decimals.
+     */
+    static final class Amount {
+        final boolean negative;
+        final long taka;
+        final int paisa;
+
+        private Amount(boolean negative, long taka, int paisa) {
+            this.negative = negative;
+            this.taka = taka;
+            this.paisa = paisa;
+        }
+
+        static Amount of(BigDecimal amount) {
+            if (amount == null) {
+                throw new NullPointerException("amount");
+            }
+            BigDecimal abs = amount.setScale(2, RoundingMode.HALF_UP).abs();
+            long taka;
+            try {
+                taka = abs.setScale(0, RoundingMode.DOWN).longValueExact();
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException("Amount out of range: " + amount, e);
+            }
+            int paisa = abs.movePointRight(2).remainder(BigDecimal.valueOf(100)).intValue();
+            boolean negative = amount.signum() < 0 && (taka > 0L || paisa > 0);
+            return new Amount(negative, taka, paisa);
+        }
+
+        boolean isZero() {
+            return taka == 0L && paisa == 0;
         }
     }
 }
