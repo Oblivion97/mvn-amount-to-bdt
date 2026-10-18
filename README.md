@@ -1,8 +1,19 @@
 # mvn-amount-to-bdt
 
-Public Maven repository for internal BRAC IT libraries, served straight from GitHub raw URLs.
+A small Java library that converts a numeric amount into words in Bangladeshi Taka, using the
+lakh/crore numbering system. It's free for anyone to use in any project.
+
+```java
+NumberToBanglaTaka.convert(1234567.89);
+// "Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven Taka Eighty Nine Paisa Only"
+```
+
+This repository is also a Maven repository. The jar is served straight from GitHub raw URLs, so Maven downloads it
+like any other dependency, with no token or manual install.
 
 ## Use it
+
+Add the repository and the dependency to your `pom.xml`:
 
 ```xml
 <repositories>
@@ -12,22 +23,32 @@ Public Maven repository for internal BRAC IT libraries, served straight from Git
         <snapshots><enabled>false</enabled></snapshots>
     </repository>
 </repositories>
+
+<dependency>
+    <groupId>com.bracits</groupId>
+    <artifactId>amount-to-bdt</artifactId>
+    <version>1.0.0</version>
+</dependency>
 ```
 
-| Artifact | Version |
+## API
+
+`NumberToBanglaTaka` is in the default package. Requires Java 8 or newer.
+
+| Method | Description |
 |---|---|
-| `com.bracits:amount-to-bdt` | 1.0.0 |
+| `static String convert(double amount)` | Full amount in words, Taka and Paisa, ending in "Only" |
+| `String convertTaka(Long taka)` | Whole-Taka part in words |
+| `String convertPaisa(int paisa)` | Paisa part in words |
 
-## Add a library
+## Publishing a new version
 
-Run from any folder, pointing `-Durl` at this repo's local clone:
+From a local clone of this repository:
 
 ```bash
-mvn deploy:deploy-file -DgroupId=com.bracits -DartifactId=my-lib -Dversion=1.0.0 -Dpackaging=jar \
-  -Dfile=path/to/my-lib-1.0.0.jar -DgeneratePom=true \
-  "-Durl=file:///C:/Users/Mahmu/Documents/Brac IT/HCMP/library"
-git add . && git commit -m "Add my-lib 1.0.0" && git push
+mvn deploy:deploy-file -DgroupId=com.bracits -DartifactId=amount-to-bdt -Dversion=1.0.1 -Dpackaging=jar \
+  -Dfile=path/to/amount-to-bdt-1.0.1.jar -DgeneratePom=true "-Durl=file:///path/to/mvn-amount-to-bdt"
+git add . && git commit -m "Release 1.0.1" && git push
 ```
 
-Then add the `<dependency>` to the project's pom.xml. Never overwrite a released version; bump the version instead,
-because Maven caches downloaded releases forever.
+Never overwrite a released version. Bump the version instead, because Maven caches downloaded releases forever.
