@@ -37,22 +37,35 @@ Publishing to Central lets anyone use the library with just the `<dependency>`, 
      </servers>
    </settings>
    ```
-3. **GPG key.** Central requires signed artifacts.
+   The `<settings>` and `<servers>` wrapper is required. Without it Maven ignores the token and the upload fails with
+   401 Unauthorized.
+3. **GPG key.** Central requires signed artifacts. On Windows, use **Git Bash**, which includes `gpg`.
    ```bash
-   gpg --gen-key
-   gpg --list-keys                                    # note the key ID
-   gpg --keyserver keyserver.ubuntu.com --send-keys KEY_ID
+   gpg --full-generate-key                            # RSA and RSA, 4096 bits
+   gpg --list-keys --keyid-format long                # key ID = 16 characters after "rsa4096/"
+   gpg --keyserver hkps://keyserver.ubuntu.com --send-keys KEY_ID
+   gpg --export-secret-keys --armor KEY_ID > signing-key.asc   # back up off this machine, then delete
    ```
 
 ### Each release
 
-After the release PR is merged:
+After the release PR is merged, in Git Bash:
 
-```bash
-git switch main && git pull
-mvn -P central-release deploy
-```
+1. Cache the GPG passphrase. It stays cached for about 10 minutes:
+   ```bash
+   echo test | gpg --local-user KEY_ID --sign > /dev/null && echo cached
+   ```
+2. Build, sign and upload:
+   ```bash
+   git switch main && git pull
+   mvn -P central-release clean deploy
+   ```
+   Use a Maven and JDK with current CA certificates; on this project's Windows machine that's IntelliJ's bundled
+   Maven with `JAVA_HOME` set to IntelliJ's `jbr`. The upload ends with "Deployment … has been validated" and
+   **BUILD SUCCESS**.
+3. **Publish.** On [central.sonatype.com](https://central.sonatype.com), go to *Publish → Deployments*, check that
+   the deployment is **VALIDATED**, and click **Publish**. Uploads aren't published automatically, so you can check them
+   first.
 
-This builds the jar, sources and javadoc, signs them, uploads them to Central and publishes the release. The version
-appears on [search.maven.org](https://search.maven.org) after roughly 15–30 minutes. A published version can never be
-changed or removed.
+The version appears on [central.sonatype.com](https://central.sonatype.com/artifact/io.github.oblivion97/amount-to-bdt)
+after roughly 15–30 minutes. A published version can never be changed or removed.
