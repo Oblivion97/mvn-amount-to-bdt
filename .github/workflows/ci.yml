@@ -22,3 +22,6 @@ jobs:
           cache: maven
       - name: Build and test
         run: mvn -B -ntp verify
+      - name: Check Maven Central release build (javadoc, unsigned)
+        if: matrix.java == '21'
+        run: mvn -B -ntp -P central-release -Dgpg.skip -DskipTests verify

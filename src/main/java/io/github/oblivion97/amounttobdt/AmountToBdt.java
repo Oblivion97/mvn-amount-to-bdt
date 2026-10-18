@@ -2,6 +2,7 @@ package io.github.oblivion97.amounttobdt;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Locale;
 
 /**
  * Converts numeric amounts into words in Bangladeshi Taka, using the lakh/crore numbering system.
@@ -31,22 +32,63 @@ public final class AmountToBdt {
      * @throws IllegalArgumentException if the Taka part does not fit in a {@code long}
      */
     public static String convert(BigDecimal amount) {
-        Amount a = Amount.of(amount);
-        if (a.isZero()) {
-            return "Zero Taka Only";
+        return convert(amount, WordStyle.DEFAULT);
+    }
+
+    /**
+     * Full amount in words, written in the given style.
+     *
+     * @throws NullPointerException     if {@code amount} or {@code style} is null
+     * @throws IllegalArgumentException if the Taka part does not fit in a {@code long}
+     */
+    public static String convert(BigDecimal amount, WordStyle style) {
+        if (style == null) {
+            throw new NullPointerException("style");
         }
+        Amount a = Amount.of(amount);
+        String taka = a.taka > 0L ? takaWords(a.taka, style.and) : a.isZero() ? "Zero" : "";
+        String paisa = a.paisa > 0 ? convertPaisa(a.paisa) : "";
 
         StringBuilder words = new StringBuilder();
         if (a.negative) {
             words.append("Minus ");
         }
-        if (a.taka > 0L) {
-            words.append(convertTaka(a.taka)).append(" Taka ");
+        if (style.currencyFirst) {
+            if (!taka.isEmpty()) {
+                words.append(style.currency).append(' ').append(taka).append(' ');
+            }
+            if (!paisa.isEmpty()) {
+                words.append(taka.isEmpty() ? "" : "and ").append(style.paisa).append(' ').append(paisa).append(' ');
+            }
+        } else {
+            if (!taka.isEmpty()) {
+                words.append(taka).append(' ').append(style.currency).append(' ');
+            }
+            if (!paisa.isEmpty()) {
+                words.append(paisa).append(' ').append(style.paisa).append(' ');
+            }
         }
-        if (a.paisa > 0) {
-            words.append(convertPaisa(a.paisa)).append(" Paisa ");
+        if (style.only) {
+            words.append("Only");
         }
-        return words.append("Only").toString();
+        String result = words.toString().trim();
+        return style.upperCase ? result.toUpperCase(Locale.ROOT) : result;
+    }
+
+    /**
+     * Full amount in words, written in the given style, for {@code double} values.
+     *
+     * @throws IllegalArgumentException if {@code amount} is NaN or infinite
+     */
+    public static String convert(double amount, WordStyle style) {
+        return convert(toBigDecimal(amount), style);
+    }
+
+    /**
+     * Whole-Taka amount in words, written in the given style.
+     */
+    public static String convert(long taka, WordStyle style) {
+        return convert(BigDecimal.valueOf(taka), style);
     }
 
     /**
@@ -104,18 +146,41 @@ public final class AmountToBdt {
     }
 
     /**
+     * Positive whole number in words, optionally with "and" before the last two digits ("One Hundred and Five").
+     */
+    private static String takaWords(long n, boolean and) {
+        long lastTwo = n % 100L;
+        if (!and || n < 100L || lastTwo == 0L) {
+            return convertTaka(n);
+        }
+        return convertTaka(n - lastTwo) + " and " + convertTaka(lastTwo);
+    }
+
+    /**
      * Full amount in Bangla words, e.g. 1234.56 → "এক হাজার দুইশত চৌত্রিশ টাকা ছাপ্পান্ন পয়সা মাত্র".
      *
      * @throws NullPointerException     if {@code amount} is null
      * @throws IllegalArgumentException if the Taka part does not fit in a {@code long}
      */
     public static String convertBangla(BigDecimal amount) {
-        Amount a = Amount.of(amount);
-        if (a.isZero()) {
-            return BanglaWords.ZERO + " " + BanglaWords.TAKA + " " + BanglaWords.ONLY;
-        }
+        return convertBangla(amount, WordStyle.DEFAULT);
+    }
 
+    /**
+     * Full amount in Bangla words. Of the style settings, only {@link WordStyle#withoutOnly()} applies to Bangla.
+     *
+     * @throws NullPointerException     if {@code amount} or {@code style} is null
+     * @throws IllegalArgumentException if the Taka part does not fit in a {@code long}
+     */
+    public static String convertBangla(BigDecimal amount, WordStyle style) {
+        if (style == null) {
+            throw new NullPointerException("style");
+        }
+        Amount a = Amount.of(amount);
         StringBuilder words = new StringBuilder();
+        if (a.isZero()) {
+            words.append(BanglaWords.ZERO).append(' ').append(BanglaWords.TAKA).append(' ');
+        }
         if (a.negative) {
             words.append(BanglaWords.MINUS).append(' ');
         }
@@ -125,7 +190,26 @@ public final class AmountToBdt {
         if (a.paisa > 0) {
             words.append(BanglaWords.under100(a.paisa)).append(' ').append(BanglaWords.PAISA).append(' ');
         }
-        return words.append(BanglaWords.ONLY).toString();
+        if (style.only) {
+            words.append(BanglaWords.ONLY);
+        }
+        return words.toString().trim();
+    }
+
+    /**
+     * Full amount in Bangla words, in the given style, for {@code double} values.
+     *
+     * @throws IllegalArgumentException if {@code amount} is NaN or infinite
+     */
+    public static String convertBangla(double amount, WordStyle style) {
+        return convertBangla(toBigDecimal(amount), style);
+    }
+
+    /**
+     * Whole-Taka amount in Bangla words, in the given style.
+     */
+    public static String convertBangla(long taka, WordStyle style) {
+        return convertBangla(BigDecimal.valueOf(taka), style);
     }
 
     /**
